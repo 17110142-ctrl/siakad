@@ -1,0 +1,9 @@
+RewriteEngine on
+
+# Jika akses hanya ke domain utama, arahkan ke index.php (atau halaman utama yang diinginkan)
+RewriteRule ^$ sandik.php [L]
+
+# Pastikan file PHP bisa diakses tanpa perlu menulis ekstensi .php
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.*)$ $1.php [L]

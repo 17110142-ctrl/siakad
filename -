@@ -1,0 +1,139 @@
+﻿<?php
+// Simple one-click trigger restore using existing DB config.
+// Usage (CLI):   php maintenance/restore_triggers.php
+// Usage (Web):   open maintenance/restore_triggers.php in browser (ensure it's protected)
+
+header('Content-Type: application/json');
+$result = ['ok' => false, 'steps' => []];
+
+// Reuse app DB connection
+require_once __DIR__ . '/../config/koneksi.php';
+
+if (!$koneksi) {
+    http_response_code(500);
+    echo json_encode(['ok' => false, 'error' => 'DB connection failed']);
+    exit;
+}
+
+// Helper to run a single SQL statement and collect status
+function run_sql($conn, $sql, $label, &$steps) {
+    $ok = mysqli_query($conn, $sql);
+    $steps[] = [
+        'label' => $label,
+        'success' => (bool)$ok,
+        'error' => $ok ? null : mysqli_error($conn)
+    ];
+    return $ok;
+}
+
+// Drop existing triggers (ignore errors)
+run_sql($koneksi, "DROP TRIGGER IF EXISTS trg_update_nilai_sts_after_tugas_delete", 'drop:delete', $result['steps']);
+run_sql($koneksi, "DROP TRIGGER IF EXISTS trg_update_nilai_sts_after_tugas_insert", 'drop:insert', $result['steps']);
+run_sql($koneksi, "DROP TRIGGER IF EXISTS trg_update_nilai_sts_after_tugas_update", 'drop:update', $result['steps']);
+
+// Re-create triggers per siakad.sql
+$create_delete = <<<SQL
+CREATE TRIGGER trg_update_nilai_sts_after_tugas_delete
+AFTER DELETE ON jawaban_tugas FOR EACH ROW
+BEGIN
+    DECLARE v_mapel INT;
+    DECLARE v_id_siswa INT;
+    DECLARE v_tp VARCHAR(10);
+    DECLARE v_semester INT;
+    DECLARE v_avg_harian DECIMAL(10, 2);
+
+    SET v_id_siswa = OLD.id_siswa;
+    SET v_tp = OLD.tapel;
+    SET v_semester = OLD.semester;
+
+    SELECT id INTO v_mapel FROM mata_pelajaran WHERE kode = OLD.nama_mapel LIMIT 1;
+
+    IF v_mapel IS NOT NULL THEN
+        SELECT ROUND(AVG(gabungan.nilai), 1) INTO v_avg_harian
+        FROM (
+            SELECT nilai FROM nilai_harian WHERE idsiswa = v_id_siswa AND mapel = v_mapel AND semester = v_semester AND tapel = v_tp AND nilai IS NOT NULL
+            UNION ALL
+            SELECT jt.nilai FROM jawaban_tugas jt JOIN mata_pelajaran mp ON jt.nama_mapel = mp.kode WHERE jt.id_siswa = v_id_siswa AND mp.id = v_mapel AND jt.semester = v_semester AND jt.tapel = v_tp AND jt.nilai IS NOT NULL
+            UNION ALL
+            SELECT n.nilai FROM nilai n JOIN ujian u ON n.id_ujian = u.id_ujian JOIN mata_pelajaran mp ON LOCATE(mp.kode, u.kode_nama) = 1 WHERE n.id_siswa = v_id_siswa AND mp.id = v_mapel AND n.semester = v_semester AND n.tp = v_tp AND n.nilai IS NOT NULL
+        ) AS gabungan;
+
+        UPDATE nilai_sts SET nilai_harian = v_avg_harian WHERE idsiswa = v_id_siswa AND mapel = v_mapel AND tp = v_tp AND semester = v_semester;
+    END IF;
+END
+SQL;
+
+$create_insert = <<<SQL
+CREATE TRIGGER trg_update_nilai_sts_after_tugas_insert
+AFTER INSERT ON jawaban_tugas FOR EACH ROW
+BEGIN
+    DECLARE v_mapel INT;
+    DECLARE v_id_siswa INT;
+    DECLARE v_tp VARCHAR(10);
+    DECLARE v_semester INT;
+    DECLARE v_avg_harian DECIMAL(10, 2);
+
+    SET v_id_siswa = NEW.id_siswa;
+    SET v_tp = NEW.tapel;
+    SET v_semester = NEW.semester;
+
+    SELECT id INTO v_mapel FROM mata_pelajaran WHERE kode = NEW.nama_mapel LIMIT 1;
+
+    IF v_mapel IS NOT NULL AND NEW.nilai IS NOT NULL THEN
+        SELECT ROUND(AVG(gabungan.nilai), 1) INTO v_avg_harian
+        FROM (
+            SELECT nilai FROM nilai_harian WHERE idsiswa = v_id_siswa AND mapel = v_mapel AND semester = v_semester AND tapel = v_tp AND nilai IS NOT NULL
+            UNION ALL
+            SELECT jt.nilai FROM jawaban_tugas jt JOIN mata_pelajaran mp ON jt.nama_mapel = mp.kode WHERE jt.id_siswa = v_id_siswa AND mp.id = v_mapel AND jt.semester = v_semester AND jt.tapel = v_tp AND jt.nilai IS NOT NULL
+            UNION ALL
+            SELECT n.nilai FROM nilai n JOIN ujian u ON n.id_ujian = u.id_ujian JOIN mata_pelajaran mp ON LOCATE(mp.kode, u.kode_nama) = 1 WHERE n.id_siswa = v_id_siswa AND mp.id = v_mapel AND n.semester = v_semester AND n.tp = v_tp AND n.nilai IS NOT NULL
+        ) AS gabungan;
+
+        INSERT INTO nilai_sts (idsiswa, mapel, tp, semester, nilai_harian, nilai_raport)
+        VALUES (v_id_siswa, v_mapel, v_tp, v_semester, v_avg_harian, 0)
+        ON DUPLICATE KEY UPDATE nilai_harian = VALUES(nilai_harian);
+    END IF;
+END
+SQL;
+
+$create_update = <<<SQL
+CREATE TRIGGER trg_update_nilai_sts_after_tugas_update
+AFTER UPDATE ON jawaban_tugas FOR EACH ROW
+BEGIN
+    DECLARE v_mapel INT;
+    DECLARE v_id_siswa INT;
+    DECLARE v_tp VARCHAR(10);
+    DECLARE v_semester INT;
+    DECLARE v_avg_harian DECIMAL(10, 2);
+
+    IF NEW.nilai <> OLD.nilai THEN
+        SET v_id_siswa = NEW.id_siswa;
+        SET v_tp = NEW.tapel;
+        SET v_semester = NEW.semester;
+
+        SELECT id INTO v_mapel FROM mata_pelajaran WHERE kode = NEW.nama_mapel LIMIT 1;
+
+        IF v_mapel IS NOT NULL THEN
+            SELECT ROUND(AVG(gabungan.nilai), 1) INTO v_avg_harian
+            FROM (
+                SELECT nilai FROM nilai_harian WHERE idsiswa = v_id_siswa AND mapel = v_mapel AND semester = v_semester AND tapel = v_tp AND nilai IS NOT NULL
+                UNION ALL
+                SELECT jt.nilai FROM jawaban_tugas jt JOIN mata_pelajaran mp ON jt.nama_mapel = mp.kode WHERE jt.id_siswa = v_id_siswa AND mp.id = v_mapel AND jt.semester = v_semester AND jt.tapel = v_tp AND jt.nilai IS NOT NULL
+                UNION ALL
+                SELECT n.nilai FROM nilai n JOIN ujian u ON n.id_ujian = u.id_ujian JOIN mata_pelajaran mp ON LOCATE(mp.kode, u.kode_nama) = 1 WHERE n.id_siswa = v_id_siswa AND mp.id = v_mapel AND n.semester = v_semester AND n.tp = v_tp AND n.nilai IS NOT NULL
+            ) AS gabungan;
+
+            UPDATE nilai_sts SET nilai_harian = v_avg_harian WHERE idsiswa = v_id_siswa AND mapel = v_mapel AND tp = v_tp AND semester = v_semester;
+        END IF;
+    END IF;
+END
+SQL;
+
+$ok1 = run_sql($koneksi, $create_delete, 'create:delete', $result['steps']);
+$ok2 = run_sql($koneksi, $create_insert, 'create:insert', $result['steps']);
+$ok3 = run_sql($koneksi, $create_update, 'create:update', $result['steps']);
+
+$result['ok'] = ($ok1 && $ok2 && $ok3);
+echo json_encode($result);
+?>
+

@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "description": "Contoh dataset untuk simulasi integrasi Dapodik. Silakan duplikasi dan sesuaikan dengan rombel/mapel sebenarnya.",
+    "last_updated": "2025-01-01"
+  },
+  "sekolah": {
+    "nama": "SMP Simulasi Terpadu",
+    "npsn": "00000000",
+    "alamat_jalan": "Jl. Simulasi No.123"
+  },
+  "peserta_didik": [
+    {
+      "peserta_didik_id": "PD-001",
+      "nama": "Adi Simulasi",
+      "nisn": "1111111111",
+      "anggota_rombel_id": "AR-001",
+      "rombongan_belajar_id": "ROMBEL-7A"
+    },
+    {
+      "peserta_didik_id": "PD-002",
+      "nama": "Bela Simulasi",
+      "nisn": "2222222222",
+      "anggota_rombel_id": "AR-002",
+      "rombongan_belajar_id": "ROMBEL-7A"
+    },
+    {
+      "peserta_didik_id": "PD-003",
+      "nama": "Cipta Simulasi",
+      "nisn": "3333333333",
+      "anggota_rombel_id": "AR-003",
+      "rombongan_belajar_id": "ROMBEL-8A"
+    }
+  ],
+  "rombongan_belajar": [
+    {
+      "rombongan_belajar_id": "ROMBEL-7A",
+      "nama": "VII A",
+      "pembelajaran": [
+        {
+          "pembelajaran_id": "PB-MAT-VII-A",
+          "mata_pelajaran_id": "MP-MAT",
+          "nama_mata_pelajaran": "Matematika",
+          "ptk_id": "PTK-MAT-VII-A"
+        },
+        {
+          "pembelajaran_id": "PB-BI-VII-A",
+          "mata_pelajaran_id": "MP-BI",
+          "nama_mata_pelajaran": "Bahasa Indonesia",
+          "ptk_id": "PTK-BI-VII-A"
+        },
+        {
+          "pembelajaran_id": "PB-BING-VII-A",
+          "mata_pelajaran_id": "MP-BING",
+          "nama_mata_pelajaran": "Bahasa Inggris",
+          "ptk_id": "PTK-BING-VII-A"
+        },
+        {
+          "pembelajaran_id": "PB-IPA-VII-A",
+          "mata_pelajaran_id": "MP-IPA",
+          "nama_mata_pelajaran": "Ilmu Pengetahuan Alam (IPA)",
+          "ptk_id": "PTK-IPA-VII-A"
+        },
+        {
+          "pembelajaran_id": "PB-IPAS-VII-A",
+          "mata_pelajaran_id": "MP-IPAS",
+          "nama_mata_pelajaran": "Ilmu Pengetahuan Alam dan Sosial (IPAS)",
+          "ptk_id": "PTK-IPAS-VII-A"
+        },
+        {
+          "pembelajaran_id": "PB-PPKN-VII-A",
+          "mata_pelajaran_id": "MP-PPKN",
+          "nama_mata_pelajaran": "Pendidikan Pancasila (PPKn)",
+          "ptk_id": "PTK-PPKN-VII-A"
+        },
+        {
+          "pembelajaran_id": "PB-PAI-VII-A",
+          "mata_pelajaran_id": "MP-PAI",
+          "nama_mata_pelajaran": "Pendidikan Agama Islam",
+          "ptk_id": "PTK-PAI-VII-A"
+        },
+        {
+          "pembelajaran_id": "PB-PJOK-VII-A",
+          "mata_pelajaran_id": "MP-PJOK",
+          "nama_mata_pelajaran": "Pendidikan Jasmani Olahraga dan Kesehatan (PJOK)",
+          "ptk_id": "PTK-PJOK-VII-A"
+        }
+      ]
+    },
+    {
+      "rombongan_belajar_id": "ROMBEL-8A",
+      "nama": "VIII A",
+      "pembelajaran": [
+        {
+          "pembelajaran_id": "PB-MAT-VIII-A",
+          "mata_pelajaran_id": "MP-MAT",
+          "nama_mata_pelajaran": "Matematika",
+          "ptk_id": "PTK-MAT-VIII-A"
+        },
+        {
+          "pembelajaran_id": "PB-BI-VIII-A",
+          "mata_pelajaran_id": "MP-BI",
+          "nama_mata_pelajaran": "Bahasa Indonesia",
+          "ptk_id": "PTK-BI-VIII-A"
+        },
+        {
+          "pembelajaran_id": "PB-BING-VIII-A",
+          "mata_pelajaran_id": "MP-BING",
+          "nama_mata_pelajaran": "Bahasa Inggris",
+          "ptk_id": "PTK-BING-VIII-A"
+        },
+        {
+          "pembelajaran_id": "PB-IPA-VIII-A",
+          "mata_pelajaran_id": "MP-IPA",
+          "nama_mata_pelajaran": "Ilmu Pengetahuan Alam (IPA)",
+          "ptk_id": "PTK-IPA-VIII-A"
+        },
+        {
+          "pembelajaran_id": "PB-IPAS-VIII-A",
+          "mata_pelajaran_id": "MP-IPAS",
+          "nama_mata_pelajaran": "Ilmu Pengetahuan Alam dan Sosial (IPAS)",
+          "ptk_id": "PTK-IPAS-VIII-A"
+        },
+        {
+          "pembelajaran_id": "PB-PPKN-VIII-A",
+          "mata_pelajaran_id": "MP-PPKN",
+          "nama_mata_pelajaran": "Pendidikan Pancasila (PPKn)",
+          "ptk_id": "PTK-PPKN-VIII-A"
+        },
+        {
+          "pembelajaran_id": "PB-PAI-VIII-A",
+          "mata_pelajaran_id": "MP-PAI",
+          "nama_mata_pelajaran": "Pendidikan Agama Islam",
+          "ptk_id": "PTK-PAI-VIII-A"
+        },
+        {
+          "pembelajaran_id": "PB-PJOK-VIII-A",
+          "mata_pelajaran_id": "MP-PJOK",
+          "nama_mata_pelajaran": "Pendidikan Jasmani Olahraga dan Kesehatan (PJOK)",
+          "ptk_id": "PTK-PJOK-VIII-A"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+<?php if ($pg == '') : ?>
+    <?php include 'home.php'; ?>
+<?php elseif ($pg == 'mapel') : ?>
+    <?php include 'mapel.php'; ?>
+<?php elseif ($pg == 'nilai') : ?>
+    <?php include 'nilai.php'; ?>
+<?php elseif ($pg == 'surat') : ?>
+    <?php include 'surat.php'; ?>
+	
+<?php else : ?>
+ <div class="app app-error align-content-stretch d-flex flex-wrap">
+        <div class="app-error-info">
+            <h5>Oops!</h5>
+            <span>It seems that the page you are looking for no longer exists.<br>
+                We will try our best to fix this soon.</span>
+            <a href="." class="btn btn-dark">Go to dashboard</a>
+        </div>
+        <div class="app-error-background"></div>
+    </div>
+
+<?php endif ?>

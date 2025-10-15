@@ -1,0 +1,68 @@
+Array
+(
+    [id_siswa] => 1
+    [nama] => ADI PRASETYO
+    [nisn] => 0111274967
+    [nokk] => 11
+    [nik] => 11
+    [tempat_lahir] => l
+    [tgl_lahir] => 1111-11-11
+    [jk] => L
+    [agama] => Islam
+    [kewarganegaraan] => WNI
+    [anak_ke] => 1
+    [jumlah_saudara] => 1
+    [cita_cita] => l
+    [hobi] => l
+    [beasiswa] => PIP
+    [no_kip] => 1
+    [no_kks] => 1
+    [alamat] => a
+    [rt] => 1
+    [rw] => 1
+    [kelurahan] => a
+    [kecamatan] => a
+    [kota] => a
+    [provinsi] => a
+    [kode_pos] => 11111
+    [nama_ayah] => l
+    [status_ayah] => Masih Hidup
+    [kewarganegaraan_ayah] => WNI
+    [tempat_lahir_ayah] => l
+    [tgl_lahir_ayah] => 1111-11-11
+    [pendidikan_ayah] => Tidak Sekolah
+    [pekerjaan_ayah] => Tidak Bekerja
+    [penghasilan_ayah] => < Rp 500.000
+    [no_hp_ayah] => 11111
+    [nama_ibu] => l
+    [status_ibu] => Masih Hidup
+    [kewarganegaraan_ibu] => WNI
+    [tempat_lahir_ibu] => l
+    [tgl_lahir_ibu] => 1111-11-11
+    [pendidikan_ibu] => Tidak Sekolah
+    [pekerjaan_ibu] => Tidak Bekerja
+    [penghasilan_ibu] => < Rp 500.000
+    [no_hp_ibu] => 1111
+    [tab] => ortu
+)
+Array
+(
+    [kk_ayah] => Array
+        (
+            [name] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+    [kk_ibu] => Array
+        (
+            [name] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
