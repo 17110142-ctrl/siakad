@@ -41,15 +41,61 @@ class MockDapodikClient implements DapodikClientInterface
         return $this->dataset['rombongan_belajar'] ?? [];
     }
 
+    public function getMatevRapor(array $params = []): array
+    {
+        // Simulasikan pembacaan daftar MATEV per rombel.
+        // Kembalikan entri minimal berisi id_evaluasi dan identitas pembelajaran/mapel.
+        $this->logPayload('get_matev_rapor', ['params' => $params]);
+        $rombelFilter = (string)($params['rombongan_belajar_id'] ?? '');
+        $items = [];
+        foreach (($this->dataset['rombongan_belajar'] ?? []) as $rombel) {
+            if ($rombelFilter !== '' && (string)($rombel['rombongan_belajar_id'] ?? '') !== $rombelFilter) {
+                continue;
+            }
+            foreach (($rombel['pembelajaran'] ?? []) as $pb) {
+                if (!is_array($pb)) { continue; }
+                $pbId = (string)($pb['pembelajaran_id'] ?? '');
+                $mpId = (string)($pb['mata_pelajaran_id'] ?? '');
+                $items[] = [
+                    'id_evaluasi' => 'SIM-' . ($pbId !== '' ? $pbId : $mpId),
+                    'pembelajaran_id' => $pbId,
+                    'mata_pelajaran_id' => $mpId,
+                    'nama_mata_evaluasi' => ($pb['nama_mata_pelajaran'] ?? 'MATA EVALUASI'),
+                ];
+            }
+        }
+        return $items;
+    }
+
+    public function getMatevNilai(array $params = []): array
+    {
+        // Simulate a lightweight warm-up/read call like the official client.
+        // Return minimal structure that looks successful.
+        $this->logPayload('get_matev_nilai', ['params' => $params]);
+        return [
+            'success' => true,
+            'status' => 'simulated',
+            'message' => 'Simulasi getMatevNilai berhasil.',
+            'params' => $params,
+            'timestamp' => date('c'),
+        ];
+    }
+
     public function kirimNilai(array $payload): array
     {
         $file = $this->logPayload('kirim_nilai', $payload);
         return [
+            'success' => true,
             'status' => 'simulated',
             'message' => 'Payload nilai disimpan dalam log simulasi.',
             'log_file' => $file,
             'timestamp' => date('c'),
             'jumlah_nilai' => isset($payload['nilai']) ? count((array)$payload['nilai']) : 0,
+            'messages' => [
+                'Simulasi pengiriman nilai dijalankan.',
+                'Payload dicatat pada ' . basename($file),
+                'success',
+            ],
         ];
     }
 
@@ -57,10 +103,16 @@ class MockDapodikClient implements DapodikClientInterface
     {
         $file = $this->logPayload('kirim_matev', $payload);
         return [
+            'success' => true,
             'status' => 'simulated',
             'message' => 'Payload matev disimpan dalam log simulasi.',
             'log_file' => $file,
             'timestamp' => date('c'),
+            'messages' => [
+                'Simulasi pengiriman matev dijalankan.',
+                'Payload dicatat pada ' . basename($file),
+                'success',
+            ],
         ];
     }
 

@@ -104,9 +104,22 @@ $lastTestMessage = trim((string)($config['last_test_message'] ?? ''));
                     <button type="button" class="btn btn-outline-secondary" id="btn-preview-nilai">
                         <i class="material-icons-two-tone align-middle me-1">preview</i> Preview Nilai
                     </button>
+                    <button type="button" class="btn btn-warning" id="btn-kirim-matev">
+                        <i class="material-icons-two-tone align-middle me-1">playlist_add</i> Kirim MATEV
+                    </button>
                     <button type="button" class="btn btn-success" id="btn-kirim-nilai">
                         <i class="material-icons-two-tone align-middle me-1">cloud_upload</i> Kirim Nilai
                     </button>
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="strict-mode" checked>
+                        <label class="form-check-label" for="strict-mode">Mode Ketat</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="debug-mode">
+                        <label class="form-check-label" for="debug-mode">Debug Detail</label>
+                    </div>
                 </div>
 
                 <div class="border rounded p-3 bg-light" style="min-height:160px;">
@@ -142,7 +155,11 @@ $lastTestMessage = trim((string)($config['last_test_message'] ?? ''));
 
         function appendLog(message, type) {
             const timestamp = new Date().toLocaleTimeString();
-            const cls = type === 'error' ? 'text-danger' : (type === 'success' ? 'text-success' : 'text-muted');
+            const cls = type === 'error'
+                ? 'text-danger'
+                : (type === 'success'
+                    ? 'text-success'
+                    : (type === 'warning' ? 'text-warning' : 'text-muted'));
             const row = $('<div>').addClass(cls).text(`[${timestamp}] ${message}`);
             $log.append(row);
             $log.scrollTop($log.prop('scrollHeight'));
@@ -160,6 +177,13 @@ $lastTestMessage = trim((string)($config['last_test_message'] ?? ''));
                 dataType: 'json',
                 data: data
             });
+        }
+
+        function getFlags(){
+            return {
+                strict: $('#strict-mode').is(':checked') ? 1 : 0,
+                debug: $('#debug-mode').is(':checked') ? 1 : 0,
+            };
         }
 
         $('#toggle-token').on('click', function () {
@@ -242,6 +266,9 @@ $lastTestMessage = trim((string)($config['last_test_message'] ?? ''));
                         if (res.data && res.data.mode) {
                             appendLog('Mode: ' + (res.data.mode === 'simulation' ? 'Simulasi (mock)' : 'Live'), 'info');
                         }
+                        if (res.data && res.data.data_source) {
+                            appendLog('Sumber nilai: ' + res.data.data_source, 'info');
+                        }
                         if (res.data && res.data.html) {
                             setPreviewContent(res.data.html);
                         } else {
@@ -270,22 +297,152 @@ $lastTestMessage = trim((string)($config['last_test_message'] ?? ''));
             const $btn = $(this);
             $btn.prop('disabled', true).addClass('disabled');
             appendLog('Mengirim data nilai ke Dapodik...', 'info');
-            ajaxAction('kirim_nilai')
+            ajaxAction('kirim_nilai', getFlags())
                 .done(function(res){
                     if (res.success) {
                         appendLog(res.message || 'Kirim nilai berhasil.', 'success');
                         if (res.data && res.data.mode) {
                             appendLog('Mode: ' + (res.data.mode === 'simulation' ? 'Simulasi (mock)' : 'Live'), 'info');
                         }
+                        if (res.data && res.data.data_source) {
+                            appendLog('Sumber nilai: ' + res.data.data_source, 'info');
+                        }
+                        if (res.data && res.data.stats) {
+                            appendLog(
+                                'Statistik pencocokan: total ' + (res.data.stats.total_rows || 0) +
+                                ', cocok ' + (res.data.stats.matched || 0) +
+                                ', belum cocok ' + (res.data.stats.unmatched || 0),
+                                'info'
+                            );
+                        }
+                        if (res.data && res.data.unmatched) {
+                            Object.keys(res.data.unmatched).forEach(function(key){
+                                const list = res.data.unmatched[key];
+                                if (Array.isArray(list) && list.length) {
+                                    const labelMap = {
+                                        kelas: 'Rombel tidak ditemukan',
+                                        mapel: 'Mapel belum terpadan',
+                                        nisn: 'NISN tidak terdaftar di Dapodik',
+                                        anggota_rombel: 'Anggota rombel tidak ditemukan'
+                                    };
+                                    const label = labelMap[key] || key;
+                                    appendLog(label + ': ' + list.length + ' entri.', 'warning');
+                                }
+                            });
+                        }
+                        if (res.data && Array.isArray(res.data.responses)) {
+                            res.data.responses.forEach(function(resp){
+                                if (Array.isArray(resp.messages) && resp.messages.length) {
+                                    const context = [resp.kelas || '', resp.mapel || ''].filter(Boolean).join(' / ');
+                                    const lastMsg = resp.messages[resp.messages.length - 1];
+                                    const line = (context ? context + ' - ' : '') + lastMsg;
+                                    appendLog(line, resp.status === 'ok' ? 'success' : 'error');
+                                }
+                            });
+                        }
                         if (res.data && res.data.summary_html) {
                             setPreviewContent(res.data.summary_html);
                         }
                     } else {
                         appendLog(res.message || 'Kirim nilai gagal.', 'error');
+                        if (res.data && Array.isArray(res.data.responses)) {
+                            res.data.responses.forEach(function(resp){
+                                if (Array.isArray(resp.messages) && resp.messages.length) {
+                                    const context = [resp.kelas || '', resp.mapel || ''].filter(Boolean).join(' / ');
+                                    const lastMsg = resp.messages[resp.messages.length - 1];
+                                    const line = (context ? context + ' - ' : '') + lastMsg;
+                                    appendLog(line, resp.status === 'ok' ? 'success' : 'error');
+                                } else if (resp.error) {
+                                    const context = [resp.kelas || '', resp.mapel || ''].filter(Boolean).join(' / ');
+                                    const line = (context ? context + ' - ' : '') + resp.error;
+                                    appendLog(line, 'error');
+                                }
+                            });
+                        }
+                        if (res.data && res.data.data_source) {
+                            appendLog('Sumber nilai: ' + res.data.data_source, 'info');
+                        }
+                        if (res.data && res.data.stats) {
+                            appendLog(
+                                'Statistik pencocokan: total ' + (res.data.stats.total_rows || 0) +
+                                ', cocok ' + (res.data.stats.matched || 0) +
+                                ', belum cocok ' + (res.data.stats.unmatched || 0),
+                                'info'
+                            );
+                        }
+                        if (res.data && res.data.unmatched) {
+                            Object.keys(res.data.unmatched).forEach(function(key){
+                                const list = res.data.unmatched[key];
+                                if (Array.isArray(list) && list.length) {
+                                    const labelMap = {
+                                        kelas: 'Rombel tidak ditemukan',
+                                        mapel: 'Mapel belum terpadan',
+                                        nisn: 'NISN tidak terdaftar di Dapodik',
+                                        anggota_rombel: 'Anggota rombel tidak ditemukan'
+                                    };
+                                    const label = labelMap[key] || key;
+                                    appendLog(label + ': ' + list.length + ' entri.', 'error');
+                                }
+                            });
+                        }
+                        if (res.data && res.data.summary_html) {
+                            setPreviewContent(res.data.summary_html);
+                        }
                     }
                 })
                 .fail(function(xhr){
-                    appendLog('Kirim nilai gagal: ' + (xhr.responseText || xhr.statusText), 'error');
+                    var raw = (xhr.responseText || xhr.statusText || '').toString();
+                    appendLog('Kirim nilai gagal: ' + raw, 'error');
+                })
+                .always(function(){
+                    $btn.prop('disabled', false).removeClass('disabled');
+                });
+        });
+
+        $('#btn-kirim-matev').on('click', function(){
+            const $btn = $(this);
+            if (!confirm('Ini akan memicu pembentukan Mata Evaluasi Rapor (MATEV) pada Dapodik. Lanjutkan?')) {
+                return;
+            }
+            $btn.prop('disabled', true).addClass('disabled');
+            appendLog('Memicu pembentukan MATEV di Dapodik...', 'info');
+            ajaxAction('kirim_matev', getFlags())
+                .done(function(res){
+                    if (res.success) {
+                        appendLog(res.message || 'Kirim MATEV berhasil.', 'success');
+                        if (res.data && Array.isArray(res.data.responses)) {
+                            res.data.responses.forEach(function(resp){
+                                if (Array.isArray(resp.messages) && resp.messages.length) {
+                                    const ctx = [resp.kelas || '', resp.mapel || ''].filter(Boolean).join(' / ');
+                                    const last = resp.messages[resp.messages.length - 1];
+                                    appendLog((ctx ? ctx + ' - ' : '') + last, resp.status === 'ok' ? 'success' : 'error');
+                                } else if (resp.error) {
+                                    const ctx = [resp.kelas || '', resp.mapel || ''].filter(Boolean).join(' / ');
+                                    appendLog((ctx ? ctx + ' - ' : '') + resp.error, 'error');
+                                }
+                            });
+                        }
+                        if (res.data && res.data.summary_html) {
+                            setPreviewContent(res.data.summary_html);
+                        }
+                    } else {
+                        appendLog(res.message || 'Kirim MATEV gagal.', 'error');
+                        if (res.data && Array.isArray(res.data.responses)) {
+                            res.data.responses.forEach(function(resp){
+                                if (Array.isArray(resp.messages) && resp.messages.length) {
+                                    const ctx = [resp.kelas || '', resp.mapel || ''].filter(Boolean).join(' / ');
+                                    const last = resp.messages[resp.messages.length - 1];
+                                    appendLog((ctx ? ctx + ' - ' : '') + last, resp.status === 'ok' ? 'success' : 'error');
+                                } else if (resp.error) {
+                                    const ctx = [resp.kelas || '', resp.mapel || ''].filter(Boolean).join(' / ');
+                                    appendLog((ctx ? ctx + ' - ' : '') + resp.error, 'error');
+                                }
+                            });
+                        }
+                    }
+                })
+                .fail(function(xhr){
+                    appendLog('Kirim MATEV gagal: ' + (xhr.responseText || xhr.statusText), 'error');
                 })
                 .always(function(){
                     $btn.prop('disabled', false).removeClass('disabled');
